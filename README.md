@@ -14,11 +14,15 @@ The spread of antimicrobial-resistant bacteria globally is a pressing issue that
 ## R package requirements:
 - R 4.1.0
 - shiny 1.6.0
+- shinydashboard 0.7.2
 - DT 0.19
 - dplyr 1.0.7
 - ggplot2 3.3.5
 - plotly 4.9.4.1
-- gtable 0.3.0
+- heatmaply 1.5.0
+- paletteer 1.5.0
+- gtsummary 1.7.2
+- rmarkdown 2.25
 - renv 1.0.3
 
 
