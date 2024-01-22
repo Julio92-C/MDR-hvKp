@@ -1,6 +1,4 @@
 # MDR-hvKp
-Interactive and user-friendly web application to explore the antimicrobial resistance (AMR) profiles of bacterial pathogens
-
 The spread of antimicrobial-resistant bacteria globally is a pressing issue that has captured my attention.
 
 - It's concerning to see how certain bacteria are becoming resistant to the drugs we use to treat them, leading to the rise of superbugs that are difficult to control.
