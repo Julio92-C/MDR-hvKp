@@ -3,17 +3,25 @@ Interactive and user-friendly web application to explore the antimicrobial resis
 
 The spread of antimicrobial-resistant bacteria globally is a pressing issue that has captured my attention.
 
--It's concerning to see how certain bacteria are becoming resistant to the drugs we use to treat them, leading to the rise of superbugs that are difficult to control.
+- It's concerning to see how certain bacteria are becoming resistant to the drugs we use to treat them, leading to the rise of superbugs that are difficult to control.
 
--In 2017, WHO Priority Pathogens: A list of antibiotic-resistant bacteria assessed to be of highest priority for new antibiotic development.
+- In 2017, WHO Priority Pathogens: A list of antibiotic-resistant bacteria assessed to be of highest priority for new antibiotic development.
 
--In 2019, nearly 1.3 million deaths including 140 thousand newborns were caused by AMR. This is expected to rise to 10 million deaths by 2050.
+- In 2019, nearly 1.3 million deaths including 140 thousand newborns were caused by AMR. This is expected to rise to 10 million deaths by 2050.
 
--We can develop strategies to prevent antimicrobial spread and improve patient outcomes by understanding the patterns and drivers of antimicrobial resistance.
+- We can develop strategies to prevent antimicrobial spread and improve patient outcomes by understanding the patterns and drivers of antimicrobial resistance.
 
 ![](www/MDR-HvKp.png)
 
 ## R package requirements:
+- R 4.1.0
+- shiny 1.6.0
+- DT 0.19
+- dplyr 1.0.7
+- ggplot2 3.3.5
+- plotly 4.9.4.1
+- gtable 0.3.0
+- renv 1.0.3
 
 
 ## Features:
