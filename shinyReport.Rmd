@@ -1,0 +1,489 @@
+---
+title: "Data Analysis Report"
+output: html_document
+date: '2024-01-05'
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r generalStats, echo=FALSE}
+general_stat <- paste("No. of Genomes:", length(unique(filter_data()$strain)), "|",
+                      "Species:", length(unique(filter_data()$species)), "|",
+                      "wg-MLST:", length(unique(filter_data()$ST)), "|",
+                      "K Loci:", length(unique(filter_data()$K_locus)), "|",
+                      "O Loci:", length(unique(filter_data()$O_locus))
+                      )
+
+print(general_stat)
+```
+
+
+
+```{=html}
+
+<h3>Genomic Filtered dataset</h3>
+
+<p>In this report, we will explore the filtered dataset using the DataTable package in R. Filtering datasets is a common task in data analysis and visualization, as it allows us to focus on specific subsets of data that meet certain criteria. The DataTable package provides an interactive and customizable way to display data in a tabular format.</p>
+
+<p>By leveraging the power of filtering and interactive data visualization, you can gain valuable insights from your datasets and present them in a user-friendly manner using the DataTable package in R.</p>
+
+```
+
+
+```{r fiterData, echo=FALSE}
+# Render dataTable
+DT::datatable(filter_data(),
+                      options = list(pageLength = input$obs_num, 
+                                     scrollX = TRUE))
+```
+
+
+
+```{=html}
+<h3>Analyzing ST Frequency of MDR-hvKp Genomes</h3>
+
+<p>In this analysis, we will be examining the frequency of ST (Sequence Type) types in MDR-hvKp (Multi-Drug Resistant hypervirulent Klebsiella pneumoniae) genomes. ST types are a classification system used to categorize different strains of bacteria based on their genetic makeup. By understanding the distribution of ST types in MDR-hvKp genomes, we can gain insights into the genetic diversity and prevalence of different strains.</p>
+
+<h4>Key Concepts</h4>
+
+<p>Before we dive into the analyis, let's familiarize ourselves with some key concepts:</p>
+
+<ol>
+<li>MDR-hvKp: Multi-Drug Resistant hypervirulent Klebsiella pneumoniae is a strain of bacteria that is resistant to multiple antibiotics and possesses hypervirulence traits, making it more dangerous and difficult to treat.</li>
+<li>ST Type: Sequence Type is a classification system used to identify and categorize different strains of bacteria based on their genetic sequence. Each ST type represents a unique combination of alleles at specific genetic loci.</li>
+<li>Frequency: In this context, frequency refers to the number of occurrences of each ST type in the MDR-hvKp genomes.</li>
+</ol>
+
+<p> Analyzing the ST type frequency of MDR-hvKp genomes provides valuable insights into the genetic diversity and prevalence of different strains. On the figure, you can easily visualize frequency and distribution of ST types in MDR-hvKp genomes. This information can be crucial for understanding the epidemiology and evolution of MDR-hvKp and can aid in the development of targeted interventions and treatment strategies.</p>
+
+
+```
+
+
+
+```{r ST_Frequency, echo=FALSE}
+library(plotly)
+
+      a <- ggplot(filter_data(), aes(x= fct_infreq(.data[[input$mainVar_freq]]),
+                                     fill=Tet.Resistant.Phenotype))
+      a <- a + geom_bar()
+      a <- a + scale_fill_manual(values=c("#600814FF","#646068FF"))
+      a <- a + theme_classic()
+      # a <- a + labs(title = "ST Type Frequency")
+      a <- a + labs(fill = "Legend")
+      a <- a + theme(legend.position = "none")
+      a <- a + theme(legend.justification = "center")
+      a <- a + theme(axis.text = element_text(size = 10.5))
+      a <- a + theme(plot.title = element_text(hjust = 0.5))
+      a <- a + theme(axis.text.x = element_text(angle = 45))
+      a <- a + labs(x="", y="No. Genomes")
+      
+      
+      # Plot Model type frequency with PLOTLY ####
+      ST_frequency_plot <- plotly::ggplotly(a)
+      ST_frequency_plot
+```
+
+
+
+```{=html}
+<h3>Plotting Mean Resistance Score against Mean Virulence Score</h3>
+
+<p>In this section, we will calculate the mean resistance score and mean virulence score for Kp genomes. We will then plot the mean resistance score against the mean virulence score, with the size of the points representing the number of ST types.</p>
+
+<h4>Key Concepts</h4>
+
+<ul>
+<li>Mean Resistance Score: The average score indicating the level of resistance to certain factors in Kp genomes.</li>
+<li>Mean Virulence Score: The average score indicating the level of virulence in Kp genomes.</li>
+<li>Count: The number of ST types with a specific mean resistance score and mean virulence score.</li>
+</ul>
+
+<p> On this analyis, it calculates the mean resistance score and mean virulence score for Kp genomes. Then, it plots the mean resistance score against the mean virulence score, with the size of the points representing the number of ST types. This visualization helps in understanding the relationship between resistance and virulence in Kp genomes.
+</p>
+
+```
+
+
+
+```{r meanScore, echo=FALSE}
+      # Calculate mean resistance score and mean virulence score, and count the number of st
+      mean_scores <- filter_data() %>%
+        group_by(.data[[input$mainVar_freq]], num_resistance_genes) %>%
+        summarise(mean_resistance_score = mean(resistance_score, na.rm = TRUE),
+                  mean_virulence_score = mean(virulence_score, na.rm = TRUE),
+                Count = n())
+      
+      # Create the 3D scatter plot
+      scatterPlot3D <- plot_ly(data = mean_scores, 
+                      x = ~mean_virulence_score, 
+                      y = ~mean_resistance_score, 
+                      z = ~num_resistance_genes, 
+                      type = "scatter3d", 
+                      color = ~.data[[input$mainVar_freq]],
+                      colors = palt1,
+                      mode = "markers",
+                      marker = list(size = 10 
+                                    )) %>%
+        layout(scene = list(xaxis = list(title = "Mean Virulence Score"),
+                            yaxis = list(title = "Mean Resistance Score"),
+                            zaxis = list(title = "Number of Resistance Genes"))) %>%
+        layout(showlegend = FALSE)
+      
+      scatterPlot3D
+```
+
+
+
+
+```{=html}
+<h3>Identification of Convergent Kp genomes using Virulence-Resistance heatmap</h3>
+  
+<p>In this section, we will discuss how to identify convergent Kp (Klebsiella pneumoniae) genomes using a Virulence-Resistance heatmap. The code filters the dataset by a specific ST (Sequence Type) and generates a heatmap plot that visualizes the presence or absence of virulence factors and resistance genes in the selected genomes.</p>
+```
+
+```{r vrHeatmap, echo=FALSE}
+    # Virulence factors and Resistance gene
+         vir_res_genData <- ST15_genotypes()[, c("Yersiniabactin", "Colibactin", "Aerobactin", "Salmochelin", "rmpA2", "RmpADC",
+                                                 "Bla_ESBL_acquired", "Tet_acquired", "Bla_Carb_acquired", 
+                                                 "Col_mutations", "Omp_mutations", "Flq_mutations")]
+         
+         # Change column names
+         vir_res_genData <- vir_res_genData %>% 
+           rename("Bla ESBL" = "Bla_ESBL_acquired",
+                  "Tetracycline" = "Tet_acquired",
+                  "Carbapenem" = "Bla_Carb_acquired",
+                  "Flq mutations" = "Flq_mutations",
+                  "Colistin mutations" = "Col_mutations",
+                  "Omp mutations" = "Omp_mutations"
+           )
+         
+         # Replace "-" by NA values
+         df <- replace(vir_res_genData, vir_res_genData == '-', NA)
+         
+         # Convert from a dataframe to a matrix
+         vir_res_genData_matrix <- data.matrix(df, rownames.force = NA)
+         
+         # Count NA in data sets
+         # sum(is.na(vir_res_genData_matrix))
+         
+         # Replace all NA values with 0 values
+         vir_res_genData_matrix <- vir_res_genData_matrix %>% replace(is.na(.), 0)
+         
+         # Convert to a binary matrix
+         vir_res_genData_Bmatrix <- as.matrix((vir_res_genData_matrix > 0) + 0)
+         
+         # Prove that the matrix is binary
+         observe({
+           is.binary.matrix <- function(x) {
+             return(is.matrix(x) && all(x == 1 | x == 0))
+           }
+           
+           mbinary <- is.binary.matrix(vir_res_genData_Bmatrix)
+           
+           print(paste0("The matrix is binary:", mbinary))
+         })
+         
+         # Annotation col dataframe
+         ann_col <- data.frame(Gene = rep(c("VFs", "ARG"), c(6,6)))
+         row.names(ann_col) <- colnames(vir_res_genData)
+         
+         ann_colors <- c(VFs = "#C01C24FF", ARG = "#201450FF")
+         
+         
+         hm <- heatmaply(vir_res_genData_Bmatrix, colors = c("#C0B090FF", "#080808FF"), 
+                         limits = c(0, 1),
+                         Rowv = FALSE,
+                         Colv = FALSE,
+                         show_dendrogram = c(FALSE, FALSE),
+                         col_side_colors = ann_col,
+                         col_side_palette = ann_colors,
+                         plot_method='plotly',
+                         hide_colorbar = TRUE,
+                         showticklabels = c(TRUE, FALSE)
+                         #colorbar_lab_format = c("Absent", "Present")
+                         
+         )
+         
+         # Plot Coverage vs seq_length with PLOTLY ####
+         Convergent_Isolates_plotly <- plotly::ggplotly(hm)
+         Convergent_Isolates_plotly
+```
+
+
+```{=html}
+<h3>Plotting ST vs No. Resistance Genes</h3>
+
+<p>In this section, we will be plot the relationship between the Sequence Type (ST) and the number of Resistance Genes in Klebsiella pneumoniae (Kp) genomes. The purpose of this plot is to visualize any patterns or trends that may exist between these two variables.</p>  
+  
+<p>This visualization can help researchers and analysts gain insights into the distribution and variability of resistance genes across different sequence types in Kp genomes.</p>
+```
+
+
+```{r stResistance, echo=FALSE}
+        # Plot ST vs No. Resistance Genes
+       m <- ggplot(filter_data(), aes(x=reorder(ST, -num_resistance_genes, FUN = median, 
+                                                na.rm = TRUE), y=num_resistance_genes,
+                                                fill= .data[[input$mainVar_freq]]))
+       m <- m + geom_boxplot()
+       m <- m + stat_boxplot(geom ='errorbar', width=0.2)
+       m <- m + scale_fill_manual(values=palt1)
+       m <- m + theme_classic()
+       m <- m + labs(fill = "Legend")
+       m <- m + theme(axis.text = element_text(size = 10.5))
+       m <- m + theme(plot.title = element_text(hjust = 0.5))
+       m <- m + theme(axis.text.x = element_text(angle = 45))
+       m <- m + labs(x="ST", y="No. Resistance Genes")
+       m <- m + theme(legend.position = "none")
+       
+
+       # Plot ST vs No. Resistance Genes with PLOTLY ####
+       Model_type_vs_identity_plot <- plotly::ggplotly(m)
+       Model_type_vs_identity_plot
+```
+
+
+```{=html}
+<h3>Correlation between Resistance Genes and Virulence Factors</h3>
+
+<p>In this analyis, we will be working with a dataset containing information about resistance genes and virulence factors in Klebsiella pneumoniae (Kp) bacteria. We will calculate the correlation between these two sets of variables to understand the relationship between resistance and virulence in Kp bacteria.</p>
+
+<h4>Key Concepts</h4>
+
+<ul>
+<li>Resistance genes: These are genes that confer resistance to antibiotics or other antimicrobial agents. They can be acquired through horizontal gene transfer or can be intrinsic to the bacteria.</li>
+<li>Virulence factors: These are molecules or structures produced by bacteria that enable them to cause disease in a host organism. They can include toxins, adhesins, and other factors that help the bacteria colonize and invade host tissues.</li>
+</ul>
+
+<p>In this analyis, we have calculated the correlation between resistance genes and virulence factors in Kp bacteria. The heatmap plot of the correlation matrix provides insights into the relationship between these two sets of variables. This analysis can help in understanding the interplay between resistance and virulence in Kp bacteria and can contribute to the development of strategies for managing infections caused by these bacteria.</p>
+
+
+```
+
+
+
+```{r corMatrix, echo=FALSE}
+# Virulence factors and Resistance genes
+       vir_res_genData <- filter_data()[, c("Yersiniabactin", "Colibactin", "Aerobactin", "Salmochelin", "rmpA2", "RmpADC", 
+                                 "Bla_ESBL_acquired", "Tet_acquired", "Bla_Carb_acquired", "Col_mutations", "Omp_mutations",
+                                 "Flq_mutations")]
+       
+       # Change column names
+       vir_res_genData <- vir_res_genData %>% 
+         rename("Bla ESBL" = "Bla_ESBL_acquired",
+                "Tetracycline" = "Tet_acquired",
+                "Carbapenem" = "Bla_Carb_acquired",
+                "Flq mutations" = "Flq_mutations",
+                "Colistin mutations" = "Col_mutations",
+                "Omp mutations" = "Omp_mutations"
+         )
+       
+       # Replace "-" by NA values
+       df <- replace(vir_res_genData, vir_res_genData == '-', NA)
+       
+       # Convert from a dataframe to a matrix
+       vir_res_genData_matrix <- data.matrix(df, rownames.force = NA)
+       
+      
+       # Replace all NA values with 0 values
+       vir_res_genData_matrix <- vir_res_genData_matrix %>% replace(is.na(.), 0)
+       
+       observe({
+         # Count NA in data sets
+         total_NA <- sum(is.na(vir_res_genData_matrix))
+         print(paste("Total NA:", total_NA))
+       })
+       
+       # Calculate correlation between resistance genes and virulence factors
+       cor_resistance <- cor(vir_res_genData_matrix, use = "complete.obs")
+       
+       # Melt the correlation matrix for visualization
+       cor_resistance_melted <- melt(cor_resistance)
+       
+       # Plot the correlation matrix for resistance genes and virulence factors
+       cor_matrix <- ggplot(cor_resistance_melted, aes(Var1, Var2, fill = value)) +
+         geom_tile() +
+         scale_fill_gradient2(low = "#080808FF", high = "#C0B090FF", mid = "white", midpoint = 0, limit = c(-1,1), space = "Lab", name="Pearson\nCorrelation") +
+         theme_minimal() +
+         theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1),
+               axis.text.y = element_text(size = 12)) +
+         labs(x="ARG-VFs", y="") 
+         # coord_fixed()
+       
+       # Plot Correlation ARG-VFs with PLOTLY ####
+       Correlation_ARG_VFs_plot <- plotly::ggplotly(cor_matrix)
+       Correlation_ARG_VFs_plot
+```
+
+
+```{=html}
+<h3>K/O Diversity</h3>
+
+<p>In this section, we will be plotting the distribution of Sequence Types (ST) vs Serotypes in Kp (Klebsiella pneumoniae) genomes. This visualization will help us understand the relationship between different STs and their corresponding serotypes.</p>
+
+<p>Serotypes: Serotypes are distinct variations or subtypes of a microorganism, typically characterized by differences in the surface antigens or proteins. Serotyping is commonly used to identify and classify different strains of bacteria.</p>
+
+<p>The figure allows us to visualize the distribution of Sequence Types (ST) vs Serotypes in Kp genomes. By plotting this information, we can gain insights into the relationship between different STs and their corresponding serotypes. The resulting plot provides a clear representation of the frequency of each ST and allows for further exploration using interactive features provided by the plotly library.</p>
+
+```
+
+```{r koDiversity, echo=FALSE}
+s <- (filter_data() %>%
+               count(ST, .data[[input$genotype_diversity]]) %>%
+               group_by(ST) %>%
+               mutate(freq = n / sum(n)) %>%
+               ggplot(aes( x = ST, y = freq, fill = .data[[input$genotype_diversity]])) +
+               geom_bar(stat = "identity") +
+               theme_classic() +
+               scale_fill_manual(values= palt1) +
+               theme(axis.text.x = element_text(angle = 0, hjust = 1)) +
+               theme(axis.text = element_text(size = 10.5)) +
+               labs(y = "Percentage", x = " ", fill = "Categories") +
+               coord_flip() +  # Flipping coordinates for better readability if there are many sequence types
+               guides(fill = guide_legend(reverse = TRUE)) + # Reverse legend for consistency with the plot
+               scale_y_continuous(labels = scales::percent) + # Convert y-axis to percentage
+               theme(legend.position = "none") +
+               theme(legend.title = element_text(colour="blue", size=14,
+                                                 face="bold")) +
+               theme(legend.text = element_text(colour="blue", size=12, hjust = 0,
+                                                lineheight = 2,face="bold")) +
+               theme(legend.background = element_rect(fill="lightblue",
+                                                      linewidth = 0.5, linetype="solid",
+                                                      colour ="darkblue"))
+       )
+       # Plot Model type vs Categories with PLOTLY ####
+       ST_vs_Serotypes_plot <- plotly::ggplotly(s)
+       ST_vs_Serotypes_plot
+
+```
+
+```{=html}
+<h3>Analyzing the Frequency of O Locus</h3>
+
+<p>In this section, we will explore the frequency of the O locus in Kp (Klebsiella pneumoniae) genomes. The O locus is a region responsible for the synthesis of lipopolysaccharides, which are important components of the outer membrane of bacteria. By understanding the distribution of O loci in Kp genomes, we can gain insights into the genetic diversity and virulence potential of different strains.</p>
+
+<p>Before we dive into the figure, let's briefly discuss some key concepts:</p>
+
+<ul>
+<li>O Locus: The O locus is a genetic region in Kp genomes that contains genes responsible for the synthesis of lipopolysaccharides. These lipopolysaccharides play a crucial role in the interaction between bacteria and their environment, including host immune responses.</li>
+<li>Frequency Analysis: Frequency analysis involves counting the occurrences of different elements in a dataset. In this case, we will count the occurrences of different O loci in Kp genomes to determine their relative frequencies.</li>
+</ul>
+
+<p>To sum up, we explored the frequency of the O locus in Kp genomes. By counting the occurrences of different O loci and visualizing the distribution using a pie chart, we can gain insights into the genetic diversity and virulence potential of different Kp strains. This analysis can be valuable in understanding the epidemiology and evolution of Kp bacteria, as well as in guiding the development of targeted interventions and treatments.</p>
+
+```
+
+
+```{r olucusFreq, echo=FALSE}
+# O locus Frequency pie chart
+O_locus_count <- table(filter_data()$O_locus)
+
+       pie_chart <- pie(O_locus_count, labels = paste0(names(O_locus_count), " / ", O_locus_count, " / ", round(100 * O_locus_count/sum(O_locus_count), 2), "%"),
+                        main="Lipopolysaccharide synthesis loci (O loci)",
+                        col = palt1,
+                        cex = 0.8, # Adjust label size
+                        radius = 1, # adjust the size
+                        xlim = c(-1.5, 1.5) # Adjust x-axis limits to create more space for labels
+       )
+
+```
+
+```{=html}
+<h3>Trending Threats</h3>
+
+<p>In this code, we will render trending threats in Kp genomes. We will analyze the prevalence of different threats over the years and visualize the data using a line plot.</p>
+
+<p>In this section, we have rendered the trending threats in Kp genomes. We filtered the data, calculated the frequency count and percentage of each threat, reshaped the data to long format, and visualized the data using a line plot. This analysis helps us understand the prevalence of different threats over the years and identify any trends or patterns.</p>
+
+```
+
+
+```{r trendingThreats, echo=FALSE}
+# Render Trending Threats
+data <- subset(filter_data(), select = c("Yersiniabactin", "Colibactin", "Aerobactin",
+                                                      "Bla_ESBL_acquired", "Bla_Carb_acquired", "Tet_acquired", 
+                                                      "Flq_mutations","Year"))
+       
+        # Calculate the frequency count of each categorical variable
+        data_summary <- data %>%
+          select(all_of(c("Year", input$categories))) %>%
+          group_by(Year) %>%
+          summarise(across(everything(), ~length(unique(.))))
+        
+        # Calculate the percentage of each categorical variable
+        data_summary <- data_summary %>%
+          mutate(across(-Year, ~./sum(.)*100))
+        
+        # Reshape the data to long format
+        data_summary_long <- data_summary %>%
+          tidyr::pivot_longer(cols = -Year)
+        
+        # Check reshaped data set
+        # print(head(data_summary_long))
+        
+        # Generate the line plot
+        n <- ggplot(data_summary_long, aes(x = Year, y = value, color = name)) +
+              geom_line() +
+              geom_point() +
+              scale_color_manual(values=palt1) +
+              labs(x = "Year", y = "Prevalance", title = "", color = "Legend") +
+              theme_classic() +
+              theme(legend.position = "none")
+
+        # Plot Model type vs accuracy with PLOTLY ####
+        Trending_Threats_plot <- plotly::ggplotly(n)
+        Trending_Threats_plot
+
+```
+
+```{=html}
+
+<p>In this section, we will be building a summary table using the gtsummary package in R. The table will provide a summary of ST (Sequence Type) groups and specimen sources. ST groups are used to classify bacterial strains based on their genetic sequences, and specimen sources refer to the origin or location from which the bacterial strains were isolated.</p>
+
+<p>In this section, we have demonstrated how to use the gtsummary package in R to create a summary table of ST groups and specimen sources. The resulting table provides a comprehensive overview of the data, including summary statistics and p-values for comparing groups. This table can be useful for analyzing and presenting data in a clear and concise manner.</p>
+
+
+
+
+```
+
+
+```{r statsResult, echo=FALSE}
+
+        # Build a gtsummary table
+        data_stats = (filter_data() %>% 
+                        # build a gtsummary table
+                        tbl_summary(
+                          by = ST,
+                          include = c("virulence_score","resistance_score", "Isolation.Source"),
+                          statistic = list(
+                            all_continuous() ~ "{mean} ({sd})",
+                            all_categorical() ~ "{n} / {N} ({p}%)"
+                          ),
+                          digits = all_continuous() ~ 2,
+                          label = c(Isolation.Source ~ "Isolation Source",
+                                    virulence_score ~ "Virulence Score",
+                                    resistance_score ~ "Resistance score"
+                                    ),
+                          sort = list(everything() ~ "frequency"),
+                          missing_text = "Missing",
+                          missing = "no"
+                          
+                        )) 
+        
+        
+        
+        add_p(data_stats) %>% 
+          add_overall() %>%
+          
+          # CONVERT TO A {gt} TABLE! VERY IMPORTANT STEP!
+          as_gt() %>%
+          tab_header(md("**Table 1. Summary of ST groups and specimen sources**"))
+        
+
+```
+
